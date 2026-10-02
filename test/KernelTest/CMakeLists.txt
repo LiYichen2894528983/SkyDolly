@@ -1,5 +1,9 @@
 find_package(Qt6Test REQUIRED)
 
+qt_add_executable(LanguageTest src/LanguageTest.cpp)
+target_link_libraries(LanguageTest PRIVATE Qt6::Test Sky::Kernel)
+add_test(NAME LanguageTest COMMAND LanguageTest)
+
 ## SkyMath Test ##
 set(TEST_NAME "SkyMathTest")
 

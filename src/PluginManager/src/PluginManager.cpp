@@ -44,6 +44,7 @@
 #include <Location/LocationImportIntf.h>
 #include <Location/LocationExportIntf.h>
 #include "PluginManager.h"
+#include "PluginName.h"
 
 namespace
 {
@@ -274,7 +275,7 @@ std::vector<PluginManager::Handle> PluginManager::enumeratePlugins(const QString
                 const QJsonObject pluginMetadata {metaData.value(::MetaData).toObject()};
                 const QUuid uuid {pluginMetadata.value(::PluginUuidKey).toString()};
                 const QString pluginName {pluginMetadata.value(::PluginNameKey).toString()};
-                const Handle handle {uuid, pluginName};
+                const Handle handle {uuid, translatedPluginName(pluginName)};
                 pluginHandles.push_back(handle);
                 pluginRegistry[uuid] = pluginPath;
             }

@@ -26,6 +26,7 @@
 #include <system_error>
 
 #include <QtGlobal>
+#include <QCoreApplication>
 #include <QString>
 #include <QStringBuilder>
 
@@ -73,13 +74,14 @@ void ExceptionHandler::onTerminate() noexcept
                 std::rethrow_exception(ex);
             } catch (const std::exception &ex) {
                 errorCode = ErrorCodes::StandardException;
-                onError("Terminate", stackTrace, ex);
+                onError(QCoreApplication::translate("ExceptionHandler", "Terminate"), stackTrace, ex);
             } catch(...) {
                 errorCode = ErrorCodes::UnknownException;
-                onError("Terminate", stackTrace, "Non std::exception");
+                onError(QCoreApplication::translate("ExceptionHandler", "Terminate"), stackTrace, "Non std::exception");
             }
         } else {
-            onError("Unknown Error", stackTrace, "An unknown error occurred");
+            onError(QCoreApplication::translate("ExceptionHandler", "Unknown Error"), stackTrace,
+                    QCoreApplication::translate("ExceptionHandler", "An unknown error occurred"));
             errorCode = ErrorCodes::UnknownError;
         }
     } catch (const std::exception &ex) {
@@ -97,7 +99,7 @@ void ExceptionHandler::onTerminate() noexcept
 
 inline QString ExceptionHandler::errorCodeToString(const std::error_code &code)
 {
-    return QStringLiteral("Error code: %1\nMessage: %2\nCategory: %3")
+    return QCoreApplication::translate("ExceptionHandler", "Error code: %1\nMessage: %2\nCategory: %3")
         .arg(code.value()).arg(code.message().c_str(), code.category().name());
 }
 
@@ -108,14 +110,14 @@ QString ExceptionHandler::exceptionToString(const std::exception &ex)
     // File system
     auto baex = dynamic_cast<const std::bad_alloc *>(&ex);
     if (baex != nullptr) {
-        message = QStringLiteral("Memory could not be allocated: %1").arg(baex->what());
+        message = QCoreApplication::translate("ExceptionHandler", "Memory could not be allocated: %1").arg(baex->what());
         return message;
     }
 
     // File system
     auto fsex = dynamic_cast<const std::filesystem::filesystem_error *>(&ex);
     if (fsex != nullptr) {
-        message = QStringLiteral("A std::filesystem::filesystem_error:\n%1\npath 1: %2\npath 2: %3").arg(fsex->what(), fsex->path1().c_str(), fsex->path2().c_str());
+        message = QCoreApplication::translate("ExceptionHandler", "A std::filesystem::filesystem_error:\n%1\npath 1: %2\npath 2: %3").arg(fsex->what(), fsex->path1().c_str(), fsex->path2().c_str());
         if (fsex->code()) {
             message = message % '\n' % errorCodeToString(fsex->code());
         }
@@ -125,7 +127,7 @@ QString ExceptionHandler::exceptionToString(const std::exception &ex)
     // I/O
     auto iosex = dynamic_cast<const std::ios_base::failure *>(&ex);
     if (iosex != nullptr) {
-        message = QStringLiteral("A std::ios_base::failure occurred: %1").arg(iosex->what());
+        message = QCoreApplication::translate("ExceptionHandler", "A std::ios_base::failure occurred: %1").arg(iosex->what());
         if (iosex->code()) {
             message = message % '\n' % errorCodeToString(iosex->code());
         }
@@ -133,6 +135,6 @@ QString ExceptionHandler::exceptionToString(const std::exception &ex)
     }
 
     // Basic exception message
-    message = QStringLiteral("A std::exception occurred:\n%1").arg(ex.what());
+    message = QCoreApplication::translate("ExceptionHandler", "A std::exception occurred:\n%1").arg(ex.what());
     return message;
 }

@@ -50,6 +50,7 @@
 #include <Module/ModuleIntf.h>
 #include <ModuleManager.h>
 #include "Module/DefaultModuleImpl.h"
+#include "PluginName.h"
 
 namespace
 {
@@ -284,7 +285,7 @@ void ModuleManager::initModuleActions(const std::unordered_map<QUuid, ModuleInfo
     for (const auto &sortedModule : sortedModules) {
         const QUuid uuid {sortedModule->id};
         const ModuleInfo& moduleInfo = moduleInfos.at(uuid);
-        QAction *action = d->moduleActionGroup->addAction(moduleInfo.first);
+        QAction *action = d->moduleActionGroup->addAction(translatedPluginName(moduleInfo.first));
         if (count < d->actionShortcuts.size()) {
             action->setShortcut(d->actionShortcuts[count]);
         }

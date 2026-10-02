@@ -169,14 +169,14 @@ QString Unit::formatPercent(std::uint8_t percent) const noexcept
 
 QString Unit::formatKnots(double speed) const noexcept
 {
-    return d->locale.toString(speed, 'f', Precision) % " knots";
+    return d->locale.toString(speed, 'f', Precision) % QCoreApplication::translate("Unit", " knots");
 }
 
 QString Unit::formatMemory(std::size_t memory) const noexcept
 {
     QString size;
     if (memory < 1024) {
-        size = QString("%1 bytes").arg(memory);
+        size = QCoreApplication::translate("Unit", "%1 bytes").arg(memory);
     } else if (memory < 1024ull * 1024ull) {
         size = QString("%1 KiB").arg(QString::number(static_cast<double>(memory) / 1024.0, 'f', 1));
     } else if (memory < 1024ull * 1024ull * 1024ull) {

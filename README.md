@@ -41,6 +41,14 @@
 # Sky Dolly
 Sky Dolly - The Black Sheep for Your Flight Recordings.
 
+## 简体中文版
+
+本仓库提供基于 Sky Dolly 0.20.0 的简体中文版，默认中文，可在菜单栏“语言”中切换 English，选择会保存并在重启后生效。
+
+- [下载 Windows 64 位安装版](https://github.com/LiYichen2894528983/SkyDolly/releases/download/v0.20.0-zh-CN.1/SkyDolly-0.20.0-zh_CN-Setup.exe)
+- [下载免安装便携 ZIP](https://github.com/LiYichen2894528983/SkyDolly/releases/download/v0.20.0-zh-CN.1/SkyDolly-zh_CN.zip)
+- [版本说明](https://github.com/LiYichen2894528983/SkyDolly/releases/tag/v0.20.0-zh-CN.1) · [中文使用与构建说明](README-zh_CN.md)
+
 ## About
 Sky Dolly connects to a running Flight Simulator 2020 instance and records various simulation variables, for replay.
 

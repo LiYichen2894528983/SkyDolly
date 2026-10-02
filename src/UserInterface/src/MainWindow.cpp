@@ -73,6 +73,7 @@
 #include <Kernel/Replay.h>
 #include <Kernel/Version.h>
 #include <Kernel/Settings.h>
+#include <Kernel/Language.h>
 #include <Kernel/Enum.h>
 #include <Kernel/SampleRate.h>
 #include <Kernel/SecurityToken.h>
@@ -467,6 +468,59 @@ void MainWindow::initUi() noexcept
     d->recentFileMenu = new RecentFileMenu(this);
     updateRecentFileMenu();
 
+    QMenu *languageMenu = new QMenu(tr("&Language"), this);
+    languageMenu->setObjectName("languageMenu");
+    ui->menubar->insertMenu(ui->helpMenu->menuAction(), languageMenu);
+    QActionGroup *languageActions = new QActionGroup(languageMenu);
+    languageActions->setExclusive(true);
+    const QString selectedLanguage = Language::getLanguage();
+    const auto addLanguage = [this, languageMenu, languageActions, &selectedLanguage](
+                                 const QString &label, const QString &language) {
+        QAction *action = languageMenu->addAction(label);
+        action->setData(language);
+        action->setCheckable(true);
+        action->setChecked(selectedLanguage == language);
+        languageActions->addAction(action);
+        connect(action, &QAction::triggered, this, [this, language]() {
+            if (Language::getLanguage() == language &&
+                QCoreApplication::instance()->property("activeLanguage").toString() == language) {
+                return;
+            }
+            if (!Language::setLanguage(language)) {
+                QMessageBox::warning(this, tr("Language"), tr("Unable to save the selected language."));
+                return;
+            }
+            QMessageBox messageBox(this);
+            messageBox.setIcon(QMessageBox::Information);
+            messageBox.setWindowTitle(tr("Restart Required"));
+            messageBox.setText(tr("The selected language will be applied after restarting Sky Dolly."));
+            QPushButton *laterButton = messageBox.addButton(tr("&Later"), QMessageBox::RejectRole);
+            QPushButton *restartButton = messageBox.addButton(tr("&Restart"), QMessageBox::AcceptRole);
+            messageBox.setDefaultButton(laterButton);
+            const auto &manager = SkyConnectManager::getInstance();
+            if (manager.isRecording() || manager.isRecordingPaused()) {
+                restartButton->setEnabled(false);
+                messageBox.setInformativeText(tr("Stop the recording before restarting. Your language selection has been saved."));
+            }
+            messageBox.exec();
+            if (messageBox.clickedButton() == restartButton) {
+                if (manager.isRecording() || manager.isRecordingPaused()) {
+                    QMessageBox::information(this, tr("Restart Required"),
+                        tr("Stop the recording before restarting. Your language selection has been saved."));
+                    return;
+                }
+                QCoreApplication::instance()->setProperty("restartRequested", true);
+                if (close()) {
+                    QCoreApplication::quit();
+                } else {
+                    QCoreApplication::instance()->setProperty("restartRequested", false);
+                }
+            }
+        });
+    };
+    addLanguage(QString::fromUtf16(u"\u7b80\u4f53\u4e2d\u6587"), "zh_CN");
+    addLanguage(QStringLiteral("English"), "en");
+
     // Window menu
     ui->stayOnTopAction->setChecked(settings.isWindowStaysOnTopEnabled());
 
@@ -498,8 +552,8 @@ void MainWindow::initUi() noexcept
             --currentPreviewInfoCount;
             QMessageBox::information(
                 this,
-                "Preview",
-                QStringLiteral(
+                tr("Preview"),
+                tr(
                     "%1 is in a preview release phase: while it should be stable to use it is not "
                     "considered feature-complete.\n\n"
                     "This release v%2 \"%3\" does not provide many new features. Instead it intends to spread "

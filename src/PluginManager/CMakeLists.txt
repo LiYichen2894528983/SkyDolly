@@ -12,6 +12,7 @@ target_sources(${LIBRARY_NAME}
         include/PluginManager/PluginManagerLib.h
         include/PluginManager/Csv.h
         include/PluginManager/PluginIntf.h
+        src/PluginName.h
         include/PluginManager/DialogPluginIntf.h
         include/PluginManager/OptionWidgetIntf.h
         include/PluginManager/PluginWithOptionWidgetIntf.h

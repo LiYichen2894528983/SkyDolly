@@ -32,6 +32,10 @@
 #include <QStyleFactory>
 #include <QStringBuilder>
 #include <QMessageBox>
+#include <QTranslator>
+#include <QFont>
+#include <QLibraryInfo>
+#include <QProcess>
 #ifdef DEBUG
 #include <QDebug>
 #endif
@@ -39,6 +43,7 @@
 #include <Kernel/Version.h>
 #include <Kernel/StackTrace.h>
 #include <Kernel/Settings.h>
+#include <Kernel/Language.h>
 #include <Kernel/System.h>
 #include <Kernel/RecentFile.h>
 #include <Model/Logbook.h>
@@ -73,6 +78,25 @@ int main(int argc, char **argv) noexcept
     QCoreApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 
     QApplication application(argc, argv);
+    application.setProperty("activeLanguage", Language::getLanguage());
+
+    QTranslator qtTranslator;
+    QTranslator appTranslator;
+    if (Language::getLanguage() == "zh_CN") {
+#ifdef Q_OS_WIN
+        QFont font = application.font();
+        font.setFamily(QStringLiteral("Microsoft YaHei UI"));
+        application.setFont(font);
+#endif
+        if (qtTranslator.load("qtbase_zh_CN", QLibraryInfo::path(QLibraryInfo::TranslationsPath))) {
+            application.installTranslator(&qtTranslator);
+        }
+        if (appTranslator.load(":/i18n/SkyDolly_zh_CN.qm")) {
+            application.installTranslator(&appTranslator);
+        } else {
+            QMessageBox::warning(nullptr, "Sky Dolly", "Unable to load the Simplified Chinese translation.");
+        }
+    }
 
     // Set the user interface style (if not default)
     // Implementation note: must be set AFTER QApplication instantiation
@@ -94,12 +118,16 @@ int main(int argc, char **argv) noexcept
     }
 
     int res {ErrorCodes::Ok};
+    QString restartLogbookPath;
     try {
         // Main window scope
         {
             std::unique_ptr<MainWindow> mainWindow = std::make_unique<MainWindow>(filePath);
             mainWindow->show();
             res = application.exec();
+            if (application.property("restartRequested").toBool()) {
+                restartLogbookPath = PersistenceManager::getInstance().getLogbookPath();
+            }
         }
         // Destroy singletons after main window has been deleted
         destroySingletons();
@@ -113,5 +141,21 @@ int main(int argc, char **argv) noexcept
         res = ErrorCodes::UnknownException;
     }
 
+    // Relaunch only after plugins, the database and persisted settings are closed.
+    if (res == ErrorCodes::Ok && application.property("restartRequested").toBool()) {
+        QStringList restartArguments = application.arguments();
+        restartArguments.removeFirst();
+        if (!restartLogbookPath.isEmpty()) {
+            if (restartArguments.isEmpty()) {
+                restartArguments.append(restartLogbookPath);
+            } else {
+                restartArguments[0] = restartLogbookPath;
+            }
+        }
+        if (!QProcess::startDetached(QCoreApplication::applicationFilePath(), restartArguments)) {
+            QMessageBox::warning(nullptr, QObject::tr("Restart Required"),
+                                 QObject::tr("Please start Sky Dolly again to apply the selected language."));
+        }
+    }
     return res;
 }

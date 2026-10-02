@@ -31,6 +31,7 @@ target_sources(${LIBRARY_NAME}
         include/Kernel/SampleRate.h
         include/Kernel/SecurityToken.h
         include/Kernel/Settings.h src/Settings.cpp
+        include/Kernel/Language.h src/Language.cpp
         include/Kernel/SkyMath.h
         include/Kernel/System.h src/System.cpp
         include/Kernel/Unit.h src/Unit.cpp

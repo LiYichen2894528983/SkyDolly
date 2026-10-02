@@ -18,9 +18,10 @@ endfunction()
 function(CheckGitRead git_hash)
     if(EXISTS ${CMAKE_BINARY_DIR}/git-state.txt)
         file(STRINGS ${CMAKE_BINARY_DIR}/git-state.txt CONTENT)
-        LIST(GET CONTENT 0 var)
-
-        set(${git_hash} ${var} PARENT_SCOPE)
+        if(CONTENT)
+            list(GET CONTENT 0 var)
+            set(${git_hash} "${var}" PARENT_SCOPE)
+        endif()
     endif()
 endfunction()
 
@@ -31,7 +32,12 @@ function(CheckGitVersion)
         WORKING_DIRECTORY ${CURRENT_LIST_DIR}
         OUTPUT_VARIABLE GIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE GIT_RESULT
         )
+    if(NOT GIT_RESULT EQUAL 0 OR GIT_HASH STREQUAL "")
+        set(GIT_HASH "source-archive")
+    endif()
 
     CheckGitRead(GIT_HASH_CACHE)
     if(NOT EXISTS ${POST_CONFIGURE_DIR})
@@ -48,19 +54,23 @@ function(CheckGitVersion)
 
     # Only update the GitInfo.cpp if the hash has changed. This will
     # prevent us from rebuilding the project more than we need to.
-    if(NOT ${GIT_HASH} STREQUAL "${GIT_HASH_CACHE}" OR NOT EXISTS ${POST_CONFIGURE_FILE})
+    if(NOT "${GIT_HASH}" STREQUAL "${GIT_HASH_CACHE}" OR NOT EXISTS ${POST_CONFIGURE_FILE})
         # Set che GIT_HASH_CACHE variable the next build won't have
         # to regenerate the source file.
-        CheckGitWrite(${GIT_HASH})
+        CheckGitWrite("${GIT_HASH}")
         message(STATUS "GitInfo: Git hash is different: ${GIT_HASH} - rebuilding GitInfo")
 
         # Also get the date of the latest commit hash of the working branch
-        execute_process(
-            COMMAND git show --no-patch --no-notes --pretty=%cd --date=iso-strict ${GIT_HASH}
-            WORKING_DIRECTORY ${CURRENT_LIST_DIR}
-            OUTPUT_VARIABLE GIT_ISO_DATE
-            OUTPUT_STRIP_TRAILING_WHITESPACE
+        if(GIT_HASH STREQUAL "source-archive")
+            string(TIMESTAMP GIT_ISO_DATE "%Y-%m-%dT%H:%M:%SZ" UTC)
+        else()
+            execute_process(
+                COMMAND git show --no-patch --no-notes --pretty=%cd --date=iso-strict ${GIT_HASH}
+                WORKING_DIRECTORY ${CURRENT_LIST_DIR}
+                OUTPUT_VARIABLE GIT_ISO_DATE
+                OUTPUT_STRIP_TRAILING_WHITESPACE
             )
+        endif()
 
         configure_file(${PRE_CONFIGURE_FILE} ${POST_CONFIGURE_FILE} @ONLY)
     else()

@@ -45,6 +45,7 @@
 #include <Connect/SkyConnectIntf.h>
 #include <Connect/FlightSimulatorShortcuts.h>
 #include <SkyConnectManager.h>
+#include "PluginName.h"
 
 namespace
 {
@@ -534,7 +535,7 @@ void SkyConnectManager::initialisePluginRegistry(const QString &pluginDirectoryN
                 const QString pluginName {pluginMetadata.value(PluginNameKey).toString()};
                 const QString flightSimulatorName {pluginMetadata.value(PluginFlightSimulatorNameKey).toString()};
                 const FlightSimulator::Id flightSimulatorId {FlightSimulator::nameToId(flightSimulatorName)};
-                SkyConnectPlugin plugin {pluginName, flightSimulatorId};
+                SkyConnectPlugin plugin {translatedPluginName(pluginName), flightSimulatorId};
                 const Handle handle {uuid, plugin};
                 d->pluginHandles.push_back(handle);
                 d->pluginRegistry[uuid] =pluginPath;
